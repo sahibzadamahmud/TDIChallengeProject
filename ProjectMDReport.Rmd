@@ -1,0 +1,153 @@
+---
+title: "Exploring the set of Skills Required for Data Scientists, Data Analysts and Data Engineers"
+author: "Sahibzada Ali Mahmud"
+date: "July 29, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+The idea behind undertaking this project was mainly pertaining to the dataset which solicited my interest in exploring the data for further analysis. The dataset is on job postings for data scientists, data analysts and data engineers on the webiste of [Indeed](https://www.indeed.com.pk/?r=us). It can be downloaded from [Kaggle](https://www.kaggle.com) by visiting this [link](https://www.kaggle.com/elroyggj/indeed-dataset-data-scientistanalystengineer/downloads/indeed-dataset-data-scientistanalystengineer.zip/2). The dataset contains the number of skills that are mentioned against each type of job while also separately specifying columns for each of the common core skills that are required for data scientists, data engineers, and data analysts. Due to time constraints, the analysis was only limited to exploratory data analysis while also checking the correlation between certain variables to determine the strength of their linear relationship. Since the relationship turned out to be weak, as future work, other regression and classification techniques can be used to extract meaningful relationshiops between variables and also make predictions. Two interesting plots are also presented that can solicit the interest of those who intend to have a better idea about what this dataset has to offer. 
+
+
+## 1. Prelimenary Data Exploration
+Initially the data was extracted from the csv file through read_csv function which is a part of readr package in R. It is comparatively faster than read.csv and returns a tibble compared to a data.frame. The size of the dataset was 18.5 MB. The reason for using a small dataset is because of the limited computational resources and memory available at disposal as well as the nature of dataset. 
+
+## 2. Loading Libraries and Extracting Data
+```{r include=FALSE}
+#Install Required Packages if Necessary
+if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
+if(!require(caret)) install.packages("caret", repos = "http://cran.us.r-project.org")
+if(!require(dplyr)) install.packages("dplyr", repos = "http://cran.us.r-project.org")
+if(!require(readr)) install.packages("readr", repos = "http://cran.us.r-project.org")
+```
+
+```{r echo=TRUE}
+#Load Required Libraries
+library(dplyr)
+library(tidyverse)
+library(caret)
+library(readr)
+
+#Extract Data
+# Read from the .csv file
+ds_jobs_data <- read_csv("F:\\TDI Data Sets\\Indeed Dataset\\indeed_job_dataset.csv")
+
+```
+
+## 3. Oberving Data
+
+```{r}
+str(ds_jobs_data)
+
+head(ds_jobs_data)
+
+```
+
+
+## 4. Checking Basic Trends and Creating Subsets based on Job Types
+
+```{r}
+# Check Statewise number of opportunities for data scientists: CA highest with 723 followed by NY
+ds_state_trend <- ds_jobs_data %>% filter(Job_Type == "data_scientist") %>% group_by(Location) %>% tally()
+ds_state_trend
+
+print(ds_state_trend, n=46)
+
+# Check Statewise number of opportunities for data analysts: CA highest with 376 followed by Ny
+da_state_trend <- ds_jobs_data %>% filter(Job_Type == "data_analyst") %>% group_by(Location) %>% tally()
+da_state_trend
+
+print(da_state_trend, n=50)
+
+# Dividing the data set into three subsets i.e. for data scientist jobs,
+# for data analyst jobs and data engineer jobs
+ds_subset <- ds_jobs_data %>% filter(Job_Type == "data_scientist")
+
+da_subset <- ds_jobs_data %>% filter(Job_Type == "data_analyst")
+
+de_subset <- ds_jobs_data %>% filter(Job_Type == "data_engineer")
+
+# Checking the number of records for each discipline
+nrow(ds_subset)
+nrow(da_subset)
+nrow(de_subset)
+
+```
+
+## 5.Checking the Percentage of Skills in Demand For each Discipline
+
+```{r}
+# Cheking the mean of No. of Skills required for each discipline
+mean(ds_subset$No_of_Skills)
+mean(da_subset$No_of_Skills)
+mean(de_subset$No_of_Skills)
+
+# % Requirement of r for each discipline
+((ds_subset %>% filter(r == 1) %>% count())/ nrow(ds_subset)) * 100 # 60.9%
+((da_subset %>% filter(r == 1) %>% count())/ nrow(da_subset)) * 100 # 25.4%
+((de_subset %>% filter(r == 1) %>% count())/ nrow(de_subset)) * 100 # 16.5%
+
+# % Requirement of Python for each discipline
+# for data engineers, python is more preferred instead of r
+((ds_subset %>% filter(python == 1) %>% count())/ nrow(ds_subset)) * 100 # 75.1%
+((da_subset %>% filter(python == 1) %>% count())/ nrow(da_subset)) * 100 # 28.5%
+((de_subset %>% filter(python == 1) %>% count())/ nrow(de_subset)) * 100 # 65.3%
+
+# % Requirement of r and python for each discipline
+((ds_subset %>% filter(r == 1 & python == 1) %>% count())/ nrow(ds_subset)) * 100 # 54.4%
+((da_subset %>% filter(r == 1 & python == 1) %>% count())/ nrow(da_subset)) * 100 # 19.4%
+((de_subset %>% filter(r == 1 & python == 1) %>% count())/ nrow(de_subset)) * 100 # 13.8%
+
+
+# % Requirement of r and sql for each discipline
+((ds_subset %>% filter(r == 1 & sql == 1) %>% count())/ nrow(ds_subset)) * 100 # 36.2%
+((da_subset %>% filter(r == 1 & sql == 1) %>% count())/ nrow(da_subset)) * 100 # 19.6%
+((de_subset %>% filter(r == 1 & sql == 1) %>% count())/ nrow(de_subset)) * 100 # 13.3%
+
+# % Requirement of python and sql for each discipline
+((ds_subset %>% filter(python == 1 & sql == 1) %>% count())/ nrow(ds_subset)) * 100 # 41.2%
+((da_subset %>% filter(python == 1 & sql == 1) %>% count())/ nrow(da_subset)) * 100 # 22.8%
+((de_subset %>% filter(python == 1 & sql == 1) %>% count())/ nrow(de_subset)) * 100 # 44.7%
+
+# % Requirement of hadoop and spark for each discipline
+((ds_subset %>% filter(hadoop == 1 & spark == 1) %>% count())/ nrow(ds_subset)) * 100 # 20.0%
+((da_subset %>% filter(hadoop == 1 & spark == 1) %>% count())/ nrow(da_subset)) * 100 # 2.0%
+((de_subset %>% filter(hadoop == 1 & spark == 1) %>% count())/ nrow(de_subset)) * 100 # 42.2%
+
+# % Requirement of all skills for each discipline
+((ds_subset %>% filter(hadoop == 1 & spark == 1 & r == 1 & python == 1 & sql == 1 & java == 1 & tableau == 1 & sas == 1) %>% count())/ nrow(ds_subset)) * 100 # 0.19%
+((da_subset %>% filter(hadoop == 1 & spark == 1 & r == 1 & python == 1 & sql == 1 & java == 1 & tableau == 1 & sas == 1) %>% count())/ nrow(da_subset)) * 100 # 0.0%
+((de_subset %>% filter(hadoop == 1 & spark == 1 & r == 1 & python == 1 & sql == 1 & java == 1 & tableau == 1 & sas == 1) %>% count())/ nrow(de_subset)) * 100 # 0.14%
+
+```
+
+## 6. Checking Correlation betwen Variables and Making Plots
+
+```{r}
+# Setting the grounds for Regression Analysis as a baseline
+# Predict number of skills as accurately as possible 
+# Check correlation between variables
+cor(ds_subset$No_of_Reviews, ds_subset$No_of_Skills, use="complete.obs")
+cor(ds_subset$No_of_Skills, ds_subset$No_of_Stars, use="complete.obs")
+cor(ds_subset$No_of_Skills, ds_subset$python, use="complete.obs")
+
+plot(ds_subset$No_of_Reviews, ds_subset$No_of_Skills)
+# The linear relationship between the variables is weak i.e. weak correlation
+
+# Get some better insight through relevant plots
+
+# This plot shows the No of Skills required per Location
+ds_jobs_data %>% ggplot(aes(Date_Since_Posted, No_of_Skills , col = Location)) + geom_point() + facet_wrap(~Location)
+   
+# This plot shows the Job Type in demand per Location           
+ds_jobs_data %>% ggplot(aes(Job_Type, No_of_Skills , col = Job_Type)) + geom_point() + facet_wrap(~Location) + theme(axis.text.x = element_text(angle = 90))
+  
+```
+
+## 7. Conclusion
+The dataset from indeed regarding job postings for data scientists, data analysts and data engineers is an interesting one. However, it requires some further clearning and data wrangling before many interesting aspects can be extracted from it. At present, through the exploratory data analysis, some interesting insights regarding the distribution of Number of Skills required per location, Job Type in demand per location, and percentage of skills in demand per Job Type have been provided. As future work, regression analysis and classification can be done for getting meaningful predictions. 
+
